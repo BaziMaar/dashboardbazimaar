@@ -32,77 +32,76 @@ const PendingDepositTable = () => {
   const [message, setMessage] = useState('');
   const [sortModel, setSortModel] = useState([]);
   const [id,setId]=useState('')
+  const fetchData = async () => {
+    try {
+      const response = await axios.get('https://sattajodileak.com/wallet/getTrans');
+      const fetchedData = response.data.wallets.reduce((acc, user) => {
+        const userDeposits = user.walletTrans
+          .filter((transaction) => {return (transaction.amount >= 0 && transaction.status===0 && transaction.utr && transaction.utr !== "")})
+          .map((transaction) => ({
+            key: transaction._id,
+            phone: user.phone,
+            amount: Math.abs(transaction.amount).toFixed(2),
+            amount_status: 'Deposit',
+            time: new Date(transaction.time).toLocaleString(),
+            paymentId: transaction.paymentId,
+            bankId: transaction.bankId,
+            ifscCode: transaction.ifscCode,
+            utr: transaction.utr,
+            status: transaction.status === 0 ? 'Pending' : transaction.status === 1 ? 'Approved' : 'Rejected',
+          }));
 
+        return [...acc, ...userDeposits];
+      }, []);
+
+      const sortedData = fetchedData.reverse();
+      setData(sortedData);
+
+      setColumns([
+        { field: 'phone', headerName: 'Phone', width: 150 },
+        { field: 'amount', headerName: 'Amount', width: 100 },
+        { field: 'amount_status', headerName: 'Request Type', width: 150 },
+        { field: 'status', headerName: 'Status', width: 120 },
+        { field: 'utr', headerName: 'UTR No.', width: 200 },
+        { field: 'time', headerName: 'Time', width: 200 },
+        {
+          field: 'accept',
+          headerName: 'Accept Payment',
+          width: 180,
+          renderCell: (params) =>
+            params.row.utr && params.row.status === 'Pending' ? (
+              <Button
+                variant="contained"
+                size="small"
+                onClick={() => handlePayment(params.row.phone, params.row.amount, 'accept', params.row.key)}
+              >
+                Accept
+              </Button>
+            ) : null,
+        },
+        {
+          field: 'reject',
+          headerName: 'Reject Payment',
+          width: 180,
+          renderCell: (params) =>
+            params.row.utr && params.row.status === 'Pending' ? (
+              <Button
+                variant="contained"
+                size="small"
+                onClick={() => handleOpenBlock(params.row.phone,params.row.amount,params.row.key)}
+              >
+                Reject
+              </Button>
+            ) : null,
+        },
+      ]);
+
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get('https://sattajodileak.com/wallet/getTrans');
-        const fetchedData = response.data.wallets.reduce((acc, user) => {
-          const userDeposits = user.walletTrans
-            .filter((transaction) => {return (transaction.amount >= 0 && transaction.status===0 && transaction.utr && transaction.utr !== "")})
-            .map((transaction) => ({
-              key: transaction._id,
-              phone: user.phone,
-              amount: Math.abs(transaction.amount).toFixed(2),
-              amount_status: 'Deposit',
-              time: new Date(transaction.time).toLocaleString(),
-              paymentId: transaction.paymentId,
-              bankId: transaction.bankId,
-              ifscCode: transaction.ifscCode,
-              utr: transaction.utr,
-              status: transaction.status === 0 ? 'Pending' : transaction.status === 1 ? 'Approved' : 'Rejected',
-            }));
-
-          return [...acc, ...userDeposits];
-        }, []);
-
-        const sortedData = fetchedData.reverse();
-        setData(sortedData);
-
-        setColumns([
-          { field: 'phone', headerName: 'Phone', width: 150 },
-          { field: 'amount', headerName: 'Amount', width: 100 },
-          { field: 'amount_status', headerName: 'Request Type', width: 150 },
-          { field: 'status', headerName: 'Status', width: 120 },
-          { field: 'utr', headerName: 'UTR No.', width: 200 },
-          { field: 'time', headerName: 'Time', width: 200 },
-          {
-            field: 'accept',
-            headerName: 'Accept Payment',
-            width: 180,
-            renderCell: (params) =>
-              params.row.utr && params.row.status === 'Pending' ? (
-                <Button
-                  variant="contained"
-                  size="small"
-                  onClick={() => handlePayment(params.row.phone, params.row.amount, 'accept', params.row.key)}
-                >
-                  Accept
-                </Button>
-              ) : null,
-          },
-          {
-            field: 'reject',
-            headerName: 'Reject Payment',
-            width: 180,
-            renderCell: (params) =>
-              params.row.utr && params.row.status === 'Pending' ? (
-                <Button
-                  variant="contained"
-                  size="small"
-                  onClick={() => handleOpenBlock(params.row.phone,params.row.amount,params.row.key)}
-                >
-                  Reject
-                </Button>
-              ) : null,
-          },
-        ]);
-
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
 
     fetchData();
   }, []);
@@ -149,16 +148,24 @@ const PendingDepositTable = () => {
         alert('Notification title or body is missing.');
         return;
       }
-  
-      // Send the notification
-      const response = await axios.post('https://sattajodileak.com/notification/send', {
-        token: user.token,
-        title: title,
-        body: message,
-      });
+
+      try{
+        const response = await axios.post('https://sattajodileak.com/notification/send', {
+          token: user.token,
+          title: title,
+          body: message,
+        });
+      }
+      catch(error){
+        console.error('Error sending notification:', error);
+        await fetchData();
+        alert("Notification has not been send through firebase due to notification id error")
+      }
   
       // Close the block modal
+      await fetchData();
       handleCloseBlock();
+      
   
       // Optional: handle response or additional success logic here
     } catch (error) {
@@ -171,42 +178,74 @@ const PendingDepositTable = () => {
   const handlePayment = async (phone, amount, status, id) => {
     setIsButtonDisabled(true);
     try {
-      await updateStatus(phone, amount, 1, id); // Status 1 means approved
-      const user = await axios.get(`https://sattajodileak.com/user/getUser?search=${phone}`);
-      const users = user.data.data[0];
-      const token=users.token
-      console.log(users)
-      await axios.post('https://sattajodileak.com/notification/send', {
-        token: token,
-        title: 'Payment Accepted by BaaziMaar',
-        body: `Your payment of amount ${amount} has been accepted.`,
-      });
-      await axios.post('https://sattajodileak.com/wallet/adminDeposit',{
-        phone,
-        amount:parseInt(amount)  
-      })
-
-      alert(`Payment of ${amount} accepted for phone number ${phone}.`);
+      // Handle only the updateStatus API error in the inner try-catch block
+      try {
+        const update = await updateStatus(phone, amount, 1, id); // Status 1 means approved
+        console.log('Update Status Response:', update);
+      } catch (updateError) {
+        // Handle the error from updateStatus specifically
+        alert("Transaction has not been found.");
+        console.error('Error updating status:', updateError);
+        setIsButtonDisabled(false);
+        return; // Exit the function if updateStatus fails
+      }
+  
+      // If updateStatus succeeds, continue the rest of the flow
+      const userResponse = await axios.get(`https://sattajodileak.com/user/getUser?search=${phone}`);
+      const user = userResponse.data.data[0];
+      const token = user.token;
+  
+      console.log('User Details:', user);
+  
+      try{
+        await axios.post('https://sattajodileak.com/notification/send', {
+          token: token,
+          title: 'Payment Accepted by BaaziMaar',
+          body: `Your payment of amount ${amount} has been accepted.`,
+        });
+      }
+      catch(error){
+        console.error('Error sending notification:', error);
+        alert("Notification has not been send through firebase due to notification id error")
+      }
+      try{
+        await axios.post('https://sattajodileak.com/wallet/adminDeposit', {
+          phone,
+          amount: parseInt(amount),  
+        });
+        alert(`Payment of ${amount} accepted for phone number ${phone}.`);
+      }
+      catch(error){
+        alert("Payment has not been succeded ");
+        await fetchData();
+      }
+      await fetchData();
+      
       setIsButtonDisabled(false);
     } catch (error) {
-      console.error('Error accepting payment:', error);
+      // Handle general errors in the outer try-catch block
+      console.error('Error processing payment:', error);
+      await fetchData();
       setIsButtonDisabled(false);
     }
   };
-
+  
+  // updateStatus function, handles its own error
   const updateStatus = async (phone, amount, status, id) => {
     try {
-      await axios.post('https://sattajodileak.com/wallet/updateStatus', {
+      const response = await axios.post('https://sattajodileak.com/wallet/updateStatus', {
         phone,
         amount,
         status,
         id,
       });
-
+      return response.data; // Return the response in case needed
     } catch (error) {
       console.error('Error updating status:', error);
+      throw error; // Re-throw the error to be caught in handlePayment
     }
   };
+  
 
   const toggleDrawer = (open) => () => {
     setDrawerOpen(open);

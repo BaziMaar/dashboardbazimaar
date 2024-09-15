@@ -61,44 +61,24 @@ const LevelManager = () => {
     }
   };
 
-  const addUpi = async () => {
-    try {
-      const response = await axios.post('https://sattajodileak.com/auto/update', 
-        { auto: newUpi },
-        {
-          headers: {
-            'Authorization': `Bearer ${API_KEY}`
-          }
-        }
-      );
-      alert(`${newUpi} new upi added successfully`);
-      setNewUpi('');
-    } catch (error) {
-      console.error('Error adding UPI:', error);
-      setError('Error adding UPI.');
-    }
-  };
-
   const handleLevelClick = async (level,type) => {
-    let autoSpin, autoColor, autoDt;
+    let autoSpins, autoColors, autoDts;
     if(type===0){
-        autoSpin = level;
+        autoSpins = level;
+        setAutoSpin(autoSpins)
     }
     else if(type===1){
-        autoColor=level;
+        autoColors=level;
+        setAutoColor(autoColors)
     }
     else{
-        autoDt=level
+        autoDts=level
+        setAutoDt(autoDts)
     }
 
     try {
       await axios.post('https://sattajodileak.com/auto/update', 
-        { auto_spin: autoSpin, auto_color: autoColor, auto_dt: autoDt },
-        {
-          headers: {
-            'Authorization': `Bearer ${API_KEY}`
-          }
-        }
+        { auto_spin: autoSpin, auto_color: autoColor, auto_dt: autoDt }
       );
       setAutoDt(autoDt);
       setAutoSpin(autoSpin);
@@ -141,9 +121,9 @@ const LevelManager = () => {
           <button onClick={() => handleLevelClick(0,2)}>Hard</button>
         </div>
       </div>
-      <div className="level-indicator" style={{ color: level === 'hard' ? 'red' : 'black' }}>
+      {/* <div className="level-indicator" style={{ color: level === 'hard' ? 'red' : 'black' }}>
         <strong>Current Level: {level.charAt(0).toUpperCase() + level.slice(1)}</strong>
-      </div>
+      </div> */}
     </div>
   );
 };
