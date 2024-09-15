@@ -43,6 +43,7 @@ const AllUsers = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [message, setMessage] = useState('');
+  const [blocked,setBlocked]=useState();
 
   useEffect(() => {
     const storedUsername = localStorage.getItem('username');
@@ -56,6 +57,7 @@ const AllUsers = () => {
       try {
         const response = await axios.get(`https://sattajodileak.com/user/getUser?page=${page}&limit=100`);
         setTransactions(response.data.data);
+        console.log(`>>>>>data>>>>>>>>>`,response.data.data)
 
         const formattedData = response.data.data.map((transaction) => ({
           id: transaction._id,
@@ -67,6 +69,7 @@ const AllUsers = () => {
           referred_wallet: Math.abs(transaction.referred_wallet).toFixed(2),
           created_at: moment(transaction.createdAt).format('YYYY-MM-DD'),
           referred_users: (transaction.refer_id).length,
+          is_blocked:transaction.is_blocked==0?'No':'Yes'
         }));
 
         setData(formattedData);
@@ -81,6 +84,7 @@ const AllUsers = () => {
           { field: 'created_at', headerName: 'Created At', width: 180 },
           { field: 'referred_wallet', headerName: 'Referred Wallet', width: 220 },
           { field: 'referred_users', headerName: 'Total Refers', width: 200 },
+          {field:'is_blocked',headerName:'Blocked',width:200},
           {
             field: 'actions',
             headerName: 'Actions',
@@ -91,6 +95,7 @@ const AllUsers = () => {
               </Button>
             ),
           },
+          
           {
             field: 'block',
             headerName: 'Block User',
@@ -293,29 +298,58 @@ const AllUsers = () => {
   const handleBlockSubmit = async () => {
     try {
       const blockApiEndpoint = `https://sattajodileak.com/user/blockUser`;
-      const user=await axios.get(`https://sattajodileak.com/user/getUser?search=${phone}`)
-      const token=user.data.data[0].token
       const notifyApiEndpoint = `https://sattajodileak.com/notification/send`;
-      const blockData = {
-        phone:phone
-      };
-      const notifyData = {
-        token:token,
-        title:'Blocked User by Bazimaar',
-        body:message
-      };
-      const blockResponse = await axios.post(blockApiEndpoint, blockData);
-      console.log(blockResponse.data);
-
-      const notifyResponse = await axios.post(notifyApiEndpoint, notifyData);
-      console.log(notifyResponse.data);
-
+  
+      // Step 1: Fetch user by phone number
+      const userResponse = await axios.get(`https://sattajodileak.com/user/getUser?search=${phone}`);
+      
+      if (userResponse.data && userResponse.data.data.length > 0) {
+        const token = userResponse.data.data[0].token;
+        
+        // Prepare block and notify data
+        const blockData = {
+          phone: phone
+        };
+        
+        const notifyData = {
+          token: token,
+          title: 'Blocked User by Bazimaar',
+          body: message
+        };
+  
+        // Step 2: Block the user
+        try {
+          const blockResponse = await axios.post(blockApiEndpoint, blockData);
+          console.log('Block Response:', blockResponse.data);
+        } catch (blockError) {
+          console.error('Error blocking user:', blockError);
+          alert('Error blocking the user');
+          return; // Exit if there's an error blocking the user
+        }
+  
+        // Step 3: Send notification after blocking
+        try {
+          const notifyResponse = await axios.post(notifyApiEndpoint, notifyData);
+          console.log('Notification Response:', notifyResponse.data);
+        } catch (notifyError) {
+          console.error('Error sending notification:', notifyError);
+          handleCloseBlock();
+        }
+        console.log(`>>>>>>>>>>`)
+  
+      } else {
+        alert('User not found');
+      }
+  
+      // Close the modal after everything is done
       handleCloseBlock();
+  
     } catch (error) {
-      console.error('Error blocking user or sending notification:', error);
+      console.error('Error fetching user or overall operation failed:', error);
+      alert('Error during the operation');
     }
   };
-
+  
   const linkStyle = {
     textDecoration: 'none',
     color: 'lightblue',
