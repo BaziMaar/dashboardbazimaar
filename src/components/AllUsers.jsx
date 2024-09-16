@@ -478,6 +478,7 @@ const AllUsers = () => {
           onChange={handleSearchInputChange}
           style={{ marginBottom: '20px', width: '100%', background: '#fff', color: 'black' }}
         />
+        
         <Button
           onClick={fetchSearchData}
           style={{
