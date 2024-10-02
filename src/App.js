@@ -38,6 +38,8 @@ import ColorNewEntry from './components/ColorNewEntry';
 import LevelManager from './components/GetLevel';
 import PendingDepositTable from './components/PendingDepositTransaction';
 import Plinko from './components/ShowPlinko';
+import './tailwind.css';
+
 function App() {
   return (
         <Router>

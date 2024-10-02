@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Drawer, IconButton, Card, CardContent, Typography } from '@mui/material';
+import { Drawer, IconButton, Card, CardContent, Typography, Button } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import { DataGrid } from '@mui/x-data-grid';
 import { Link } from 'react-router-dom';
@@ -9,44 +9,55 @@ import moment from 'moment';
 const Plinko = () => {
   const [data, setData] = useState([]);
   const [isDrawerOpen, setDrawerOpen] = useState(false);
+  const [page, setPage] = useState(0); // Track current page (starting from 0)
+  const [pageSize, setPageSize] = useState(10); // Track page size
+  const [rowCount, setRowCount] = useState(0); // Total number of records
+  const handlePageChange=()=>{
+    setPage(page+1);
+  }
 
   // Fetch data from the API
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get('https://sattajodileak.com/mines/getPlinkoEntry');
-        const transformedData = response.data.map((item) => ({
-          id: item._id,
-          phone: item.phone || 'N/A',
-          time: moment(item.time).format('YYYY-MM-DD HH:mm:ss'),
-          bet: `${parseFloat(item?.bet?.$numberDecimal || item.bet || 0)}`,
-          payOut: `${ parseFloat(item?.payOut?.$numberDecimal || item.payOut || 0)}`,
-          profit: `${ parseFloat(item?.profit?.$numberDecimal || item.profit || 0)}`,
-          user_id: item.user_id,
-          createdAt: moment(item.createdAt).format('YYYY-MM-DD HH:mm:ss'),
-          updatedAt: moment(item.updatedAt).format('YYYY-MM-DD HH:mm:ss'),
-          gameName:item.game
-        }));
-        setData(transformedData);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
+  const fetchData = async (page, pageSize) => {
+    try {
+      const response = await axios.get('https://sattajodileak.com/mines/getPlinkoEntry', {
+        params: {
+          page: page + 1, // API expects pages starting from 1
+          limit: 100,
+        },
+      });
+      const transformedData = response.data.entries.map((item) => ({
+        id: item._id,
+        bet: `${parseFloat(item?.bet?.$numberDecimal || item.bet || 0)}`,
+        payOut: `${parseFloat(item?.payOut?.$numberDecimal || item.payOut || 0)}`,
+        profit: `${parseFloat(item?.profit?.$numberDecimal || item.profit || 0)}`,
+        user_id: item.user_id,
+        createdAt: moment(item.createdAt).format('YYYY-MM-DD HH:mm:ss'),
+        updatedAt: moment(item.updatedAt).format('YYYY-MM-DD HH:mm:ss'),
+        gameName: item.game,
+      }));
+      
+      setData(transformedData);
+      setRowCount(response.data.totalEntries); // Set the total number of entries
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
 
-    fetchData();
-  }, []);
+  // Fetch data when the component mounts or page/pageSize changes
+  useEffect(() => {
+    fetchData(page, pageSize);
+  }, [page, pageSize]);
 
   const toggleDrawer = (open) => () => {
     setDrawerOpen(open);
   };
 
   const columns = [
-    { field: 'phone', headerName: 'Phone', width: 150 },
-    { field: 'time', headerName: 'Time', width: 200 },
+    { field: 'user_id', headerName: 'User ID', width: 150 },
     { field: 'bet', headerName: 'Bet', width: 120 },
     { field: 'payOut', headerName: 'Payout', width: 120 },
     { field: 'profit', headerName: 'Profit', width: 120 },
-    { field: 'user_id', headerName: 'User ID', width: 150 },
+    
     { field: 'createdAt', headerName: 'Created At', width: 200 },
     { field: 'updatedAt', headerName: 'Updated At', width: 200 },
     { field: 'gameName', headerName: 'Game Name', width: 150 },
@@ -126,7 +137,13 @@ const Plinko = () => {
         <DataGrid
           rows={data}
           columns={columns}
-          pageSizeOptions={[5, 10, 15, 20, 25, 50, 100]}
+          pagination
+          page={page}
+          pageSize={pageSize}
+          rowCount={rowCount}
+          paginationMode="server"
+          onPageChange={(newPage) => setPage(newPage)}
+          onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
           autoHeight
           sx={{
             bgcolor: '#DADADA',
@@ -136,6 +153,7 @@ const Plinko = () => {
             },
           }}
         />
+        <Button onClick={handlePageChange}>Next Page</Button>
       </div>
 
       <footer style={{ textAlign: 'center', padding: '10px', color: '#99E9FA', background: '#DADADA' }}>

@@ -11,7 +11,8 @@ import {
 } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import shadows from '@mui/material/styles/shadows';
+import { toast, ToastContainer } from 'react-toastify';
+import "react-toastify/dist/ReactToastify.css";
 
 const StyledCard = styled(Card)({
   minWidth: 320,
@@ -80,15 +81,20 @@ const Login = () => {
 
   const handleLogin = () => {
     if (formData.username === 'ashu' && formData.password === '54321@sHu') {
-      alert('Admin Logged In Successfully!');
+      toast.success('Admin Logged In Successfully!', {
+        style: { backgroundColor: '#001B48', color: '#A8FF7A' }, // Custom color for success toast
+      });
       localStorage.setItem('username', formData.username);
       localStorage.setItem('password', formData.password);
       window.location.replace('/home');
       setFormData({ username: '', password: '' });
     } else {
-      alert('Invalid Credentials');
+      toast.error('Invalid Credentials', {
+        style: { backgroundColor: '#f44336', color: '#fff' }, // Custom color for error toast
+      });
     }
   };
+  
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: 'linear-gradient(to right, #0C1821, #1C253A)' }}>
@@ -129,6 +135,9 @@ const Login = () => {
           </StyledForm>
         </CardContent>
       </StyledCard>
+
+      {/* Add ToastContainer to display toasts */}
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
     </div>
   );
 };

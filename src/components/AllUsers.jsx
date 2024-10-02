@@ -26,7 +26,8 @@ import moment from 'moment';
 import { Link } from 'react-router-dom';
 import MenuIcon from '@mui/icons-material/Menu';
 import CrossIcon from '../assets/cross.svg';
-
+import { toast, ToastContainer } from 'react-toastify';
+import "react-toastify/dist/ReactToastify.css";
 const AllUsers = () => {
   const [transactions, setTransactions] = useState([]);
   const [isDrawerOpen, setDrawerOpen] = useState(false);
@@ -103,6 +104,16 @@ const AllUsers = () => {
             renderCell: (params) => (
               <Button variant="contained" size="small" onClick={() => handleOpenBlock(params.row.phone)}>
                 Block User
+              </Button>
+            ),
+          },
+          {
+            field: 'unblock',
+            headerName: 'Unblock User',
+            width: 200,
+            renderCell: (params) => (
+              <Button variant="contained" size="small" onClick={() => handleUnblock(params.row.phone)}>
+                Unblock User
               </Button>
             ),
           },
@@ -299,6 +310,7 @@ const AllUsers = () => {
     try {
       const blockApiEndpoint = `https://sattajodileak.com/user/blockUser`;
       const notifyApiEndpoint = `https://sattajodileak.com/notification/send`;
+
   
       // Step 1: Fetch user by phone number
       const userResponse = await axios.get(`https://sattajodileak.com/user/getUser?search=${phone}`);
@@ -320,10 +332,14 @@ const AllUsers = () => {
         // Step 2: Block the user
         try {
           const blockResponse = await axios.post(blockApiEndpoint, blockData);
-          console.log('Block Response:', blockResponse.data);
+          toast.success('Blocked User Sucessfully!', {
+            style: { backgroundColor: '#001B48', color: '#A8FF7A' }, // Custom color for success toast
+          });
         } catch (blockError) {
           console.error('Error blocking user:', blockError);
-          alert('Error blocking the user');
+          toast.error('Error Blocing the User', {
+            style: { backgroundColor: '#f44336', color: '#fff' }, // Custom color for error toast
+          });
           return; // Exit if there's an error blocking the user
         }
   
@@ -349,7 +365,24 @@ const AllUsers = () => {
       alert('Error during the operation');
     }
   };
-  
+  const handleUnblock=async(phone)=>{
+    const unBlockApiEndpoint=`https://sattajodileak.com/user/unBlockUser`;
+    const unblockData = {
+      phone: phone
+    };
+    try{
+      const blockResponse = await axios.post(unBlockApiEndpoint, unblockData);
+      toast.success('UnBlocked User Sucessfully!', {
+        style: { backgroundColor: '#001B48', color: '#A8FF7A'}
+      });
+    }
+    catch(error){
+      toast.error('Error in unblocking the user',{
+        style: { backgroundColor: '#f44336', color: '#fff'}
+      });
+    }
+    
+  }
   const linkStyle = {
     textDecoration: 'none',
     color: 'lightblue',
@@ -397,18 +430,20 @@ const AllUsers = () => {
   );
 
   return (
-    <div style={{ backgroundColor: '#081A30', color: 'lightblue', minHeight: '100vh' }}>
+    // <div style={{ backgroundColor: '#081A30', color: 'lightblue', minHeight: '100vh' }}>
+    <div className='bg-[#081A30] text-blue-400 '>
       <header
-        style={{
-          backgroundColor: '#102339',
-          color: 'lightblue',
-          textAlign: 'center',
-          padding: '10px',
-          display: 'flex',
-          alignItems: 'center',
-          boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)', // Add shadow
-          zIndex: 1, // Ensure header is on top of other elements
-        }}
+        // style={{
+        //   backgroundColor: '#102339',
+        //   color: 'lightblue',
+        //   textAlign: 'center',
+        //   padding: '10px',
+        //   display: 'flex',
+        //   alignItems: 'center',
+        //   boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)', // Add shadow
+        //   zIndex: 1, // Ensure header is on top of other elements
+        // }}
+        className='bg-[#102339] text-blue-300 text-center'
       >
         <IconButton
           onClick={toggleDrawer(true)}
@@ -602,6 +637,7 @@ const AllUsers = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
     </div>
   );
 };
