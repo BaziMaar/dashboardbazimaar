@@ -9,8 +9,7 @@ import {
 import MenuIcon from '@mui/icons-material/Menu';
 import { Link } from 'react-router-dom';
 import { DataGrid } from '@mui/x-data-grid';
-import CrossIcon from '../assets/cross.svg';  // Assuming you have this asset
-
+import CrossIcon from '../assets/cross.svg'; 
 const AviatorEntry = () => {
   const [transactions, setTransactions] = useState([]);
   const [isDrawerOpen, setDrawerOpen] = useState(false);

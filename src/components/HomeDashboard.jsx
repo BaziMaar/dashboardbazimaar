@@ -162,8 +162,8 @@ const Home = () => {
       <Header />
       <div style={{ position: 'relative', zIndex: 1}}>
         <White3DCard style={{background: '#081A30', borderRadius:'0px'}}>
-          <div style={{ textAlign: 'center', fontFamily: 'monospace', fontSize: 'large', paddingBottom: '20px', textShadow: '2px 2px 4px rgba(0, 0, 0, 0.2)', color: 'lightblue' }}>
-            <h2>Total Stats</h2>
+          <div className='text-white'>
+            <h2 className='text-white font-bold'>Total Stats</h2>
           </div>
           <div className="dashboard" >
             <StyledCard   onClick={() => goToCardWindow('users')} gradient="linear-gradient(-20deg, #2b5876 0%, #4e4376 100%)">
