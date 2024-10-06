@@ -61,34 +61,46 @@ const LevelManager = () => {
     }
   };
 
-  const handleLevelClick = async (level,type) => {
+  const handleLevelClick = async (level, type) => {
     let autoSpins, autoColors, autoDts;
-    if(type===0){
-        autoSpins = level;
-        setAutoSpin(autoSpins)
-    }
-    else if(type===1){
-        autoColors=level;
-        setAutoColor(autoColors)
-    }
-    else{
-        autoDts=level
-        setAutoDt(autoDts)
-    }
-
-    try {
+    
+    if (type === 0) {
+      autoSpins = level;
       await axios.post('https://sattajodileak.com/auto/update', 
-        { auto_spin: autoSpin, auto_color: autoColor, auto_dt: autoDt }
+        { auto_spin: autoSpins, auto_color: autoColor, auto_dt: autoDt }
       );
-      setAutoDt(autoDt);
-      setAutoSpin(autoSpin);
-      setAutoColor(autoColor);
+      setAutoSpin(autoSpins);
+    } else if (type === 1) {
+      autoColors = level;
+      await axios.post('https://sattajodileak.com/auto/update', 
+        { auto_spin: autoSpin, auto_color: autoColors, auto_dt: autoDt }
+      );
+      setAutoColor(autoColors);
+    } else {
+      autoDts = level;
+      await axios.post('https://sattajodileak.com/auto/update', 
+        { auto_spin: autoSpin, auto_color: autoColor, auto_dt: autoDts }
+      );
+      setAutoDt(autoDts);
+    }
+  
+    try {
+      console.log(`Auto spin is ${autoSpins}, auto color is ${autoColors}, and auto dt is ${autoDts}`);
+      
+      // Sending the updated values in the request
+
+      
+      // Updating the state after the request completes
+      setAutoSpin(autoSpins);
+      setAutoColor(autoColors);
+      setAutoDt(autoDts);
       setLevel(level);
     } catch (error) {
       console.error('Error updating level:', error);
       setError('Error updating level.');
     }
   };
+  
 
   if (loading) {
     return <div className="loading">Loading...</div>;
